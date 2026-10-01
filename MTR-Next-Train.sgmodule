@@ -1,0 +1,11 @@
+#!name=港鐵即時班次
+#!desc=港铁官方实时班次面板，显示时间、剩余分钟、终点和月台。支持10条铁路线路，无需MITM。
+#!author=Misaka08056
+#!arguments=LINE:EAL,STATION:SHT,DIRECTION:BOTH,COUNT:3,DESTINATION:ALL,UPDATE_INTERVAL:10
+#!arguments-desc=LINE：线路代码或繁体线路名。EAL 东铁、TML 屯马、TWL 荃湾、ISL 港岛、KTL 观塘、TKL 将军澳、TCL 东涌、AEL 机场快线、SIL 南港岛、DRL 迪士尼。\n\nSTATION：繁体站名或代码，例如 沙田 / SHT、大圍 / TAW、上水 / SHS。换线路时须同时修改车站。\n\nDIRECTION：BOTH 双向、UP 上行、DOWN 下行。东铁 UP 往罗湖/落马洲，DOWN 往金钟；其他线路见 README。\n\nCOUNT：每方向显示1至4班。\n\nDESTINATION：ALL 显示所有终点，或填写繁体终点站名/代码，例如 羅湖 / LOW、落馬洲 / LMC、金鐘 / ADM。仅筛选接口返回的未来最多4班，不代表目的地所有后续列车。\n\nUPDATE_INTERVAL：面板更新间隔（秒），建议10或以上。Surge在面板显示/切换时检查刷新，不保证后台每10秒运行。\n\n默认显示东铁沙田双向各3班。所有时间为香港时间。
+
+[Panel]
+MTR_Next_Train = script-name=MTR_Next_Train,update-interval={{{UPDATE_INTERVAL}}}
+
+[Script]
+MTR_Next_Train = type=generic,timeout=15,script-path=https://raw.githubusercontent.com/Misaka08056/surge-mtr-panel/main/mtr-panel.js,script-update-interval=86400,argument="line={{{LINE}}}&station={{{STATION}}}&direction={{{DIRECTION}}}&count={{{COUNT}}}&destination={{{DESTINATION}}}"

@@ -1,3 +1,4 @@
 21 automated checks passed.
 Includes actual EAL-SHT API response, parameter validation, destination filtering, timeout, service alert, rate limit, stale data, midnight and Hong Kong timezone.
 Surge on-device verification remains required.
+9 additional multi-station checks passed: list parsing, aligned filters, response ordering, partial failures, partial timeout, late callbacks, limits.

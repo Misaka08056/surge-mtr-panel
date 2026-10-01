@@ -234,33 +234,53 @@ const LINES = {
     });
     if (!code) throw Error('线路无效，请填写 EAL、TML 等代码或繁体线路名。');
     const line = LINES[code];
-    const sta = stationCode(args.station || 'SHT', line);
-    if (!sta) throw Error('车站不属于所选线路，请填写繁体站名或车站代码。');
-    title = line.name + ' · ' + line.stations[sta];
+    const stationValues = (args.station || 'SHT').split(/[,，]/).map(function (s) { return s.trim(); });
+    if (stationValues.length > 8) throw Error('最多同时显示8个车站。');
+    const stations = stationValues.map(function (value) {
+      const sta = stationCode(value, line);
+      if (!sta) throw Error('车站「' + value + '」不属于所选线路，请填写繁体站名或代码。');
+      return sta;
+    });
+    title = line.name + ' · ' + stations.map(function (sta) { return line.stations[sta]; }).join(' / ');
     const colors = {EAL:'#53B7E8',TML:'#9A3820',AEL:'#00888A',TCL:'#F7943E',TKL:'#7D499D',SIL:'#B5BD00',TWL:'#E2231A',ISL:'#0075C2',KTL:'#00AB4E',DRL:'#E86BA2'};
     color = colors[code];
-    const direction = (args.direction || 'BOTH').toUpperCase();
-    if (!['UP', 'DOWN', 'BOTH'].includes(direction)) throw Error('DIRECTION 请填写 UP、DOWN 或 BOTH。');
+    function perStation(raw, defaultValue) {
+      const values = (raw || defaultValue).split(/[,，]/).map(function (v) { return v.trim(); });
+      if (values.length !== 1 && values.length !== stations.length) throw Error('方向和目的地填写一个通用值，或按车站顺序填写相同数量的值。');
+      return stations.map(function (_, i) { return values.length === 1 ? values[0] : values[i]; });
+    }
+    const directions = perStation(args.direction, 'BOTH').map(function (v) {
+      const direction = v.toUpperCase();
+      if (!['UP', 'DOWN', 'BOTH'].includes(direction)) throw Error('DIRECTION 请填写 UP、DOWN 或 BOTH。');
+      return direction;
+    });
     const limit = Number(args.count || '3');
     if (!Number.isInteger(limit) || limit < 1 || limit > 4) throw Error('COUNT 请填写 1 至 4。');
-    let dest = null;
-    if (args.destination && args.destination.toUpperCase() !== 'ALL') {
-      dest = stationCode(args.destination, line);
+    const destinations = perStation(args.destination, 'ALL').map(function (v) {
+      if (v.toUpperCase() === 'ALL') return null;
+      const dest = stationCode(v, line);
       if (!dest) throw Error('DESTINATION 请填写本线路终点的繁体站名或代码，或 ALL。');
+      return dest;
+    });
+    const results = new Array(stations.length);
+    let pending = stations.length;
+    function complete() {
+      done(stations.map(function (sta, i) {
+        const text = results[i] || '请求超时，请点击面板刷新。';
+        return (stations.length > 1 ? '【' + line.stations[sta] + '】\n' : '') + text;
+      }).join('\n\n'));
     }
-    const url = 'https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=' + code + '&sta=' + sta + '&lang=TC';
-    setTimeout(function () { done('请求超时，请点击面板刷新。'); }, 11000);
-    $httpClient.get({url, timeout: 10}, function (error, response, body) {
-      if (finished) return;
+    setTimeout(complete, 11000);
+    function render(sta, direction, dest, error, response, body) {
       try {
-        if (error) return done('网络请求失败，请点击面板刷新。');
+        if (error) return '网络请求失败，请点击面板刷新。';
         if (!response || Number(response.status) !== 200) {
-          return done(Number(response && response.status) === 429 ? '请求过于频繁，请稍后刷新。' : '接口异常（HTTP ' + (response ? response.status : '?') + '），请稍后刷新。');
+          return Number(response && response.status) === 429 ? '请求过于频繁，请稍后刷新。' : '接口异常（HTTP ' + (response ? response.status : '?') + '），请稍后刷新。';
         }
         const payload = JSON.parse(body);
-        if (Number(payload.status) !== 1) return done('港铁服务提示：' + (payload.message || '暂时无法提供数据'));
+        if (Number(payload.status) !== 1) return '港铁服务提示：' + (payload.message || '暂时无法提供数据');
         const data = payload.data && payload.data[code + '-' + sta];
-        if (!data) return done('港铁暂未提供此站班次数据。');
+        if (!data) return '港铁暂未提供此站班次数据。';
         const updated = data.curr_time || payload.curr_time;
         const sourceTime = timestamp(updated);
         const now = Date.now();
@@ -284,8 +304,22 @@ const LINES = {
           });
         });
         content.push('更新 ' + (Number.isFinite(sourceTime) ? updated.slice(11) : '时间未知') + ' · 香港时间');
-        done(content.join('\n'));
-      } catch (e) { done('数据解析失败：' + e.message); }
+        return content.join('\n');
+      } catch (e) { return '数据解析失败：' + e.message; }
+    }
+    stations.forEach(function (sta, i) {
+      const url = 'https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=' + code + '&sta=' + sta + '&lang=TC';
+      try {
+        $httpClient.get({url, timeout: 10}, function (error, response, body) {
+          if (finished || results[i] !== undefined) return;
+          results[i] = render(sta, directions[i], destinations[i], error, response, body);
+          if (--pending === 0) complete();
+        });
+      } catch (e) {
+        if (results[i] !== undefined) return;
+        results[i] = '网络请求失败，请点击面板刷新。';
+        if (--pending === 0) complete();
+      }
     });
   } catch (e) { done('参数错误：' + e.message); }
 })();

@@ -15,17 +15,32 @@ https://raw.githubusercontent.com/Misaka08056/surge-mtr-panel/main/MTR-Next-Trai
 | 参数 | 默认值 | 用途 |
 | --- | --- | --- |
 | LINE | EAL | 线路代码或繁体线路名，例如 東鐵綫 |
-| STATION | SHT | 繁体站名或代码，例如 沙田、大圍、上水 |
-| DIRECTION | BOTH | BOTH 双向；UP 上行；DOWN 下行，见下表 |
-| COUNT | 3 | 每方向显示 1–4 班 |
-| DESTINATION | ALL | ALL 或具体列车终点，例如 羅湖/LOW、落馬洲/LMC |
+| STATION | SHT | 繁体站名或代码；多个用逗号分隔，例如 SHS,LMC，最多8站 |
+| DIRECTION | BOTH | BOTH/UP/DOWN；一个值通用，或按车站顺序填写，例如 UP,DOWN |
+| COUNT | 3 | 每个车站每方向显示 1–4 班 |
+| DESTINATION | ALL | ALL 或列车终点；一个值通用，或按车站顺序填写，例如 LMC,ALL |
 | UPDATE_INTERVAL | 10 | 面板更新间隔（秒），建议至少 10 |
 
-参数名与模块占位符区分大小写；英文代码输入不区分大小写。站名使用下表的繁体写法。参数不要含 &、逗号或双引号。切换线路时请同时修改车站。
+参数名与模块占位符区分大小写；英文代码输入不区分大小写。站名使用下表的繁体写法。车站、方向、目的地支持英文或中文逗号分隔；参数不要含 & 或双引号。切换线路时请同时修改车站。
 
 例如：从上水查看开往罗湖的列车，填写 LINE=EAL、STATION=上水、DIRECTION=UP、DESTINATION=羅湖、COUNT=4。
 
 DESTINATION 按列车实际终点筛选，不是路线规划，也不是经过该站的所有列车。接口每方向最多提供未来 4 班；筛选后无结果不意味着之后没有车。
+
+## 同时显示上水往落马洲和落马洲开出
+
+| 参数 | 填写值 |
+| --- | --- |
+| LINE | EAL |
+| STATION | SHS,LMC |
+| DIRECTION | UP,DOWN |
+| DESTINATION | LMC,ALL |
+| COUNT | 4 |
+| UPDATE_INTERVAL | 10 |
+
+第1组是上水站往落马洲，第2组是落马洲站向南开出的列车。按车站填写顺序分组显示。一站请求失败时其他车站仍显示。方向和目的地只填一个值时会应用于所有车站；填写多个值时，数量须与车站相同。所有车站使用同一LINE线路。站点较多时可降低COUNT以缩短面板。
+
+已安装旧版：先更新模块，保留或重新填写上述参数。新版脚本URL带有 ?v=2，以避开旧脚本缓存。若仍未生效，请移除模块后用原链接重新导入。
 
 ## 线路与方向
 

@@ -1,8 +1,20 @@
-# 港鐵即時班次 · Surge iOS 面板
+# 港鐵即時班次 · Surge 面板与 Scriptable 小组件
 
 直接使用港铁官方 Next Train API，显示预计到站/开出时间、剩余分钟、列车终点、月台及经马场提示。无需 MITM 或额外 API 密钥。支持官方接口的 10 条铁路线路；轻铁使用另一套 API，本模块不包含轻铁。
 
-## 导入
+## Scriptable 桌面小组件
+
+现在也可在 iPhone 桌面显示班次，使用独立脚本 [MTR-Widget.js](MTR-Widget.js)，不依赖 Surge。支持小、中、大三种尺寸，保留多站点、方向和终点筛选。按[安装及参数说明](Scriptable-使用说明.md)添加 Scriptable 小组件。
+
+例如中号组件同时显示上水往落马洲和落马洲开出，在 Parameter 填写：
+
+```text
+line=EAL&station=SHS,LMC&direction=UP,DOWN&destination=LMC,ALL&count=3
+```
+
+桌面刷新由 iOS 调度，不能保证每10秒或每分钟更新。Scriptable 版显示预计时刻和来源数据时间，不显示静态分钟倒计时。已通过模拟运行测试并确认官方接口可用；尚未在实体 iPhone 验证原生排版及后台刷新。
+
+## 导入 Surge 模块
 
 在 Surge 的模块页面选择从 URL 安装，粘贴：
 

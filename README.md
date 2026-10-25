@@ -2,7 +2,7 @@
 
 港铁班次显示工具，支持 **Surge iOS 面板**与 **Scriptable 桌面小组件**，共用港铁官方 Next Train 数据源，无需 API 密钥。
 
-**[📲 一键导入 Scriptable](https://github.com/Misaka08056/surge-mtr-panel/raw/refs/heads/main/MTR-Widget.scriptable)** · [Scriptable 使用说明](Scriptable-使用说明.md) · [Surge 模块](MTR-Next-Train.sgmodule)
+**[📲 一键导入 Scriptable](https://github.com/Misaka08056/surge-mtr-panel/releases/download/scriptable/MTR-Widget.scriptable)** · [Scriptable 使用说明](Scriptable-使用说明.md) · [Surge 模块](MTR-Next-Train.sgmodule)
 
 在已安装 Scriptable 的 iPhone 上点上方入口，打开 `.scriptable` 文件后确认导入。如果 Safari 先下载文件，请在下载列表打开它，再点“分享 → Scriptable”。导入名称为 **mtr班次显示**，无需复制代码或安装第三方导入器。导入后仍需在桌面添加 Scriptable 组件并选择该脚本，iOS 不允许网页自动放置桌面组件。
 

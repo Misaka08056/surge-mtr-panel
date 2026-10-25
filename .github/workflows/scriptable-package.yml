@@ -1,0 +1,39 @@
+name: Publish Scriptable import package
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - MTR-Widget.js
+      - MTR-Widget.scriptable
+      - scripts/build-scriptable.cjs
+      - tests/scriptable-widget.test.cjs
+      - .github/workflows/scriptable-package.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: scriptable-package
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and verify native import package
+        run: |
+          node scripts/build-scriptable.cjs
+          node --test tests/scriptable-widget.test.cjs
+      - name: Publish downloadable Scriptable file
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if gh release view scriptable >/dev/null 2>&1; then
+            gh release upload scriptable MTR-Widget.scriptable --clobber
+          else
+            gh release create scriptable MTR-Widget.scriptable --target "$GITHUB_SHA" --title "Scriptable 一键导入" --notes "在 iPhone 下载 MTR-Widget.scriptable，打开或分享给 Scriptable 后确认导入。详细设置见仓库 README。"
+          fi

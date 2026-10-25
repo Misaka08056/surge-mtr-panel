@@ -5,7 +5,7 @@
 ## 一键导入到 iPhone
 
 1. 安装并打开 Scriptable。
-2. 点 **[📲 一键导入 Scriptable](https://github.com/Misaka08056/surge-mtr-panel/raw/refs/heads/main/MTR-Widget.scriptable)**，打开 `MTR-Widget.scriptable` 后按 Scriptable 提示确认导入，脚本名称为 **mtr班次显示**。
+2. 点 **[📲 一键导入 Scriptable](https://github.com/Misaka08056/surge-mtr-panel/releases/download/scriptable/MTR-Widget.scriptable)**，打开 `MTR-Widget.scriptable` 后按 Scriptable 提示确认导入，脚本名称为 **mtr班次显示**。
 3. 如果 Safari 先下载了文件，在下载列表打开它，再点 **分享 → Scriptable**。也可在“文件”App 中找到该文件并分享给 Scriptable。不同 iOS 版本的打开方式可能不同。
 4. 在 Scriptable 运行导入的脚本，默认预览「东铁沙田双向」的中号组件。
 5. 长按 iPhone 桌面空白处，添加 **Scriptable 中号小组件**；长按组件 → **编辑小组件** → **Script** 选择 **mtr班次显示**，在 **Parameter** 填写下方参数。

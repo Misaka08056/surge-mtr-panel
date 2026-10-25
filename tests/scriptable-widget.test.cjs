@@ -11,17 +11,24 @@ const payload = (sta = 'SHT', extra = {}) => ({status: 1, curr_time: '2026-10-25
 function harness(options = {}) {
   const widgets = [], calls = [];
   class Element {
-    constructor() { this.children = []; }
+    constructor() { this.children = []; this.axis = 'horizontal'; }
     addStack() { const v = new Element(); this.children.push(v); return v; }
     addText(value) { const v = {text: value}; this.children.push(v); return v; }
-    addSpacer() {} setPadding() {} layoutVertically() {} centerAlignContent() {} topAlignContent() {}
+    addSpacer(length) { this.children.push({kind:'spacer',length:length === undefined ? null : length}); }
+    setPadding(...padding) { this.padding = padding; }
+    layoutVertically() { this.axis = 'vertical'; }
+    centerAlignContent() { this.align = 'center'; }
+    topAlignContent() { this.align = 'top'; }
     async presentSmall() { this.preview = 'small'; } async presentMedium() { this.preview = 'medium'; } async presentLarge() { this.preview = 'large'; }
   }
   const context = vm.createContext({Date: FixedDate, console,
-    args: {widgetParameter: options.parameter || '', queryParameters: options.query || {}},
+    args: {widgetParameter: options.parameter === undefined ? 'station=SHT&direction=BOTH&destination=ALL' : options.parameter, queryParameters: options.query || {}},
     config: {runsInWidget: options.inWidget !== false, widgetFamily: options.family || 'medium'},
-    ListWidget: Element, Color: class {constructor(value) {this.value = value;}}, Size: class {constructor(w,h) {this.width=w;this.height=h;}},
-    Font: {systemFont: size => size, semiboldSystemFont: size => size},
+    ListWidget: class extends Element { constructor() { super(); this.axis = 'vertical'; } },
+    Color: class {constructor(value,alpha=1) {this.value=value;this.alpha=alpha;} static dynamic(light,dark) {return options.dark === false ? light : dark;}},
+    Size: class {constructor(w,h) {this.width=w;this.height=h;}},
+    Device: {screenSize: () => options.screen || {width:390,height:844}},
+    Font: {systemFont: size => ({size}), semiboldSystemFont: size => ({size,bold:true}), semiboldMonospacedSystemFont: size => ({size,bold:true,mono:true})},
     URLScheme: {forRunningScript: () => 'scriptable:///run?scriptName=MTR', forOpeningScript: () => 'scriptable:///open?scriptName=MTR'},
     Script: {setWidget: w => widgets.push(w), complete: () => {}},
     Request: class {
@@ -88,7 +95,7 @@ test('small/medium/large cap groups and request each visible station once', asyn
   for(const [family,calls,omitted] of [['small','SHT',5],['medium','SHT',4],['large','SHT,SHS',2]]) {
     const r = await run({family,parameter});
     assert.equal(r.calls.join(','),calls); assert.match(r.text,new RegExp('\\+'+omitted+'组'));
-    assert.match(r.text,/10\/25 12:00 港時/);
+    assert.match(r.text,/更新 10\/25 12:00/);
     assert.equal(r.widgets[0].refreshAfterDate.getTime(),NOW+60000);
   }
 });
@@ -121,4 +128,21 @@ test('native Scriptable import package contains the exact current widget', () =>
   assert.equal(pkg.icon.glyph, 'train');
   assert.equal(pkg.always_run_in_app, false);
   assert.deepEqual(pkg.share_sheet_inputs, []);
+});
+
+test('empty parameters default to Lok Ma Chau departures and Sheung Shui to Lok Ma Chau', async () => {
+  const r = await run({parameter:''});
+  assert.equal(r.calls.join(','),'LMC,SHS');
+  assert.match(r.text,/落馬洲/); assert.match(r.text,/上水/); assert.match(r.text,/往 金鐘/); assert.match(r.text,/往 落馬洲/);
+  assert.doesNotMatch(r.text,/羅湖/);
+  const cfg = r.api.settings('station=SHT');
+  assert.equal(cfg.directions[0],'BOTH'); assert.equal(cfg.destinations[0],null);
+});
+
+test('light and dark appearance keep the source date and error states visible', async () => {
+  for(const dark of [false,true]) {
+    const r = await run({parameter:'',dark,responses:{LMC:Error('offline')}});
+    assert.equal(r.widgets[0].backgroundColor.value,dark ? '101722' : 'F1F5FA');
+    assert.match(r.text,/部分失败/); assert.match(r.text,/更新 10\/25 12:00/);
+  }
 });

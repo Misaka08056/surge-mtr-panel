@@ -3,9 +3,9 @@
 // 港鐵班次 · Scriptable Home Screen widget · MIT License.
 // Standalone: no Surge, API key, location permission, or external modules needed.
 // Widget Parameter example:
-// line=EAL&station=SHS,LMC&direction=UP,DOWN&destination=LMC,ALL&count=3
+// line=EAL&station=LMC,SHS&direction=DOWN,UP&destination=ALL,LMC&count=3
 const DEFAULTS = {
-  line: 'EAL', station: 'SHT', direction: 'BOTH', destination: 'ALL', count: '3'
+  line: 'EAL', station: 'LMC,SHS', direction: 'DOWN,UP', destination: 'ALL,LMC', count: '3'
 };
 const PREVIEW_SIZE = 'medium'; // small / medium / large, when run inside Scriptable
 
@@ -227,7 +227,11 @@ function stationCode(value, line) {
   return Object.keys(line.stations).find(code => code === normalize(value) || normalize(line.stations[code]) === normalize(value));
 }
 function settings(raw) {
-  const options = Object.assign({}, DEFAULTS, parseParameter(raw));
+  const input = parseParameter(raw);
+  const options = Object.assign({}, DEFAULTS, input);
+  // A custom station must not inherit a two-station direction/destination list.
+  if (input.station && !input.direction) options.direction = 'BOTH';
+  if (input.station && !input.destination) options.destination = 'ALL';
   const code = Object.keys(LINES).find(id => id === options.line.toUpperCase() || normalize(LINES[id].name) === normalize(options.line));
   if (!code) throw Error('线路无效，请填写 EAL、TML 等代码或繁体线路名。');
   const line = LINES[code];
@@ -300,97 +304,178 @@ function makeGroup(cfg, group, result, now) {
     .sort((a, b) => timestamp(a.time) - timestamp(b.time)).slice(0, cfg.count);
   return model;
 }
-function label(parent, value, size, color, bold, lines) {
+function palette() {
+  const adaptive = (light, dark) => Color.dynamic(new Color(light), new Color(dark));
+  return {
+    background: adaptive('F1F5FA', '101722'),
+    card: adaptive('FFFFFF', '1B2636'),
+    text: adaptive('152338', 'F3F7FD'),
+    muted: adaptive('586A80', 'A4B5CA'),
+    border: adaptive('DCE5EF', '2A3A50'),
+    warning: adaptive('97530B', 'FFD08A')
+  };
+}
+function accentFor(code) {
+  const light = {EAL:'007AA3',TCL:'A54E00',SIL:'637000',DRL:'AB3771'};
+  return Color.dynamic(new Color(light[code] || COLORS[code]), new Color(COLORS[code]));
+}
+function widgetMetrics(family) {
+  const screen = typeof Device === 'undefined' ? {width:390,height:844} : Device.screenSize();
+  const short = Math.min(screen.width, screen.height);
+  const compact = short < 350 || Math.max(screen.width, screen.height) <= 667;
+  // Conservative phone dimensions: leave a little room for system margins.
+  const width = family === 'small' ? (compact ? 141 : 158) : short < 350 ? 292 : short <= 375 ? 320 : short <= 402 ? 338 : 360;
+  return {width, compact, padding:10, gap:8, cardHeight:family === 'large' ? 120 : compact ? 80 : 92};
+}
+function label(parent, value, size, color, bold, lines, mono) {
   const text = parent.addText(String(value));
-  text.font = bold ? Font.semiboldSystemFont(size) : Font.systemFont(size);
-  text.textColor = new Color(color || 'F0F4FA');
+  text.font = mono ? Font.semiboldMonospacedSystemFont(size) : bold ? Font.semiboldSystemFont(size) : Font.systemFont(size);
+  text.textColor = typeof color === 'string' ? new Color(color) : color || palette().text;
   text.lineLimit = lines || 1;
   text.minimumScaleFactor = 0.7;
   return text;
 }
-function card(parent, cfg, group, family) {
+function trainDetails(train) {
+  const details = [];
+  if (train.plat) details.push(train.plat + '台');
+  if (train.route === 'RAC') details.push('經馬場');
+  return details;
+}
+function destinationName(cfg, train) { return cfg.line.stations[train.dest] || train.dest || '未知終點'; }
+function nextTrain(parent, cfg, train, size, theme) {
+  const suffix = trainDetails(train).join(' · ');
+  label(parent, train.time.slice(11, 16) + ' ' + destinationName(cfg, train) + (suffix ? ' · ' + suffix : ''), size, theme.muted, false, 1, true);
+}
+function card(parent, cfg, group, family, metrics, wide) {
+  const theme = palette();
+  const small = family === 'small';
+  const compact = metrics.compact && family !== 'large';
   const box = parent.addStack();
   box.layoutVertically();
-  box.setPadding(5, 6, 5, 6);
-  box.backgroundColor = new Color('182438');
-  box.cornerRadius = 10;
-  // Conservative width fits the smaller iPhone medium widgets as well.
-  // Small uses the available width; large has more vertical room.
-  if (family !== 'small') box.size = new Size(124, 0);
-  const arrow = group.dir === 'UP' ? '↑' : '↓';
-  label(box, cfg.line.stations[group.sta] + ' ' + arrow, family === 'medium' ? 11 : 12, COLORS[cfg.code], true);
-  box.addSpacer(3);
+  box.setPadding(compact ? 5 : 6, 8, compact ? 5 : 6, 8);
+  box.size = new Size(small || wide ? metrics.width - 20 : (metrics.width - 20 - metrics.gap) / 2, metrics.cardHeight);
+  box.backgroundColor = theme.card;
+  box.cornerRadius = 13;
+  box.borderWidth = 0.5;
+  box.borderColor = theme.border;
+  const heading = box.addStack();
+  heading.centerAlignContent();
+  label(heading, cfg.line.stations[group.sta], wide ? 13 : 11, theme.text, true);
+  heading.addSpacer();
+  label(heading, group.dir === 'UP' ? '↑' : '↓', 12, accentFor(cfg.code), true);
   if (group.error) {
-    label(box, group.error, 11, 'FFBA79', false, 3);
+    box.addSpacer(7);
+    label(box, group.error, 10, theme.warning, false, 3);
+    box.addSpacer();
     return;
   }
-  if (group.warning) {
-    label(box, group.warning, 9, 'FFBA79');
-    box.addSpacer(2);
-  }
-  const limit = family === 'small' || (family === 'medium' && group.warning) ? 1 : family === 'medium' ? 2 : 3;
   if (!group.trains.length) {
-    label(box, group.dest ? '暂无符合终点的班次' : '暂无班次／非服务时段', 10, 'ADBBD0', false, 2);
-    label(box, '往' + (group.dest ? cfg.line.stations[group.dest] : group.dir === 'UP' ? cfg.line.up : cfg.line.down), 9, 'ADBBD0');
+    box.addSpacer(6);
+    if (group.warning) label(box, group.warning, 9, theme.warning);
+    label(box, group.dest ? '暂无符合终点的班次' : '暂无班次／非服务时段', 10, theme.muted, false, 2);
+    label(box, '往' + (group.dest ? cfg.line.stations[group.dest] : group.dir === 'UP' ? cfg.line.up : cfg.line.down), 9, theme.muted);
+    box.addSpacer();
     return;
   }
-  group.trains.slice(0, limit).forEach((train, i) => {
-    if (i) box.addSpacer(3);
-    const row = box.addStack();
-    row.centerAlignContent();
-    label(row, train.time.slice(11, 16), family === 'small' ? 22 : family === 'medium' ? 14 : 15, 'F0F4FA', true);
-    row.addSpacer(5);
-    label(row, cfg.line.stations[train.dest] || train.dest || '?', 11, 'F0F4FA', true);
-    const departure = String(train.timeType || train.timetype || '').toUpperCase() === 'D';
-    const details = [departure ? '開出' : '到站'];
-    if (train.plat) details.push(train.plat + '台');
-    if (train.route === 'RAC') details.push('經馬場');
-    label(box, details.join(' · '), family === 'medium' ? 8 : 9, 'ADBBD0');
+  const first = group.trains[0];
+  const departure = String(first.timeType || first.timetype || '').toUpperCase() === 'D';
+  box.addSpacer(wide ? 5 : 1);
+  const body = wide ? box.addStack() : box;
+  if (wide) body.centerAlignContent();
+  const primary = wide ? body.addStack() : body;
+  if (wide) primary.layoutVertically();
+  const timeRow = primary.addStack();
+  timeRow.centerAlignContent();
+  label(timeRow, first.time.slice(11, 16), wide ? 32 : small ? (compact ? 26 : 30) : compact ? 22 : 26, theme.text, true, 1, true);
+  timeRow.addSpacer(4);
+  label(timeRow, departure ? '開出' : '到站', 8, theme.muted);
+  const details = trainDetails(first);
+  label(primary, '往 ' + destinationName(cfg, first) + (details.length ? ' · ' + details.join(' · ') : ''), compact ? 9 : 10, theme.muted);
+  if (group.warning) {
+    if (wide) body.addSpacer();
+    else box.addSpacer(3);
+    label(wide ? body : box, group.warning, 9, theme.warning, false, wide ? 2 : 1);
+    return;
+  }
+  const upcoming = group.trains.slice(1, small ? 1 : family === 'large' ? 3 : 2);
+  if (!upcoming.length) { box.addSpacer(); return; }
+  let later = box;
+  if (wide) {
+    body.addSpacer();
+    later = body.addStack();
+    later.layoutVertically();
+    label(later, '稍後班次', 9, theme.muted);
+    later.addSpacer(3);
+  } else {
+    box.addSpacer();
+    const divider = box.addStack();
+    divider.size = new Size(0, 0.5);
+    divider.backgroundColor = theme.border;
+    box.addSpacer(3);
+  }
+  upcoming.forEach((train, i) => {
+    if (i) later.addSpacer(4);
+    nextTrain(later, cfg, train, wide ? 11 : compact ? 8 : 9, theme);
   });
 }
 function makeWidget(cfg, groups, total, family, raw) {
+  const theme = palette();
+  const metrics = widgetMetrics(family);
   const widget = new ListWidget();
   widget.setPadding(10, 10, 10, 10);
-  widget.backgroundColor = new Color('0C1422');
+  widget.backgroundColor = theme.background;
   widget.refreshAfterDate = new Date(Date.now() + 60000);
-  // Widget Parameter is not automatically passed when the script is opened.
   widget.url = URLScheme.forRunningScript() + '&widgetParameter=' + encodeURIComponent(raw) + '&family=' + family;
   const header = widget.addStack();
   header.centerAlignContent();
-  label(header, family === 'small' ? cfg.code + ' 班次' : cfg.line.name + ' · 班次', 12, COLORS[cfg.code], true);
+  label(header, '港鐵班次', 12, theme.text, true);
+  header.addSpacer(6);
+  const badge = header.addStack();
+  badge.setPadding(2, 5, 2, 5);
+  badge.backgroundColor = Color.dynamic(new Color(COLORS[cfg.code], 0.12), new Color(COLORS[cfg.code], 0.16));
+  badge.cornerRadius = 4;
+  label(badge, cfg.code, 8, accentFor(cfg.code), true);
   header.addSpacer();
   const omitted = total - groups.length;
-  if (omitted) label(header, '+' + omitted + '组', 9, 'ADBBD0');
-  widget.addSpacer(6);
-  if (family === 'small') card(widget, cfg, groups[0], family);
-  else {
-    for (let i = 0; i < groups.length; i += 2) {
-      if (i) widget.addSpacer(8);
-      const row = widget.addStack();
-      row.topAlignContent();
-      card(row, cfg, groups[i], family);
-      if (groups[i + 1]) { row.addSpacer(); card(row, cfg, groups[i + 1], family); }
+  if (omitted) label(header, '+' + omitted + '组', 9, theme.muted);
+  widget.addSpacer(metrics.compact ? 4 : 6);
+  const wide = family === 'large' && groups.length <= 2;
+  const columns = family === 'small' || wide ? 1 : 2;
+  for (let i = 0; i < groups.length; i += columns) {
+    if (i) widget.addSpacer(metrics.gap);
+    const row = widget.addStack();
+    row.topAlignContent();
+    card(row, cfg, groups[i], family, metrics, wide);
+    if (columns === 2 && groups[i + 1]) {
+      row.addSpacer();
+      card(row, cfg, groups[i + 1], family, metrics, false);
     }
   }
   widget.addSpacer();
-  widget.addSpacer(3);
+  widget.addSpacer(4);
   const times = groups.map(group => group.updated).filter(Boolean).sort();
-  // Include source date: a widget can remain visible across midnight or offline.
-  const footer = times.length ? times[0].slice(5, 16).replace('-', '/') + ' 港時' : '无有效数据 · 点按重试';
-  label(widget, footer, 9, 'ADBBD0');
+  const footer = widget.addStack();
+  footer.centerAlignContent();
+  // The source date stays visible even if iOS leaves this snapshot overnight.
+  const failed = groups.some(group => group.error);
+  label(footer, times.length ? '更新 ' + times[0].slice(5, 16).replace('-', '/') : '无有效数据 · 点按重试', metrics.compact ? 8 : 9, failed ? theme.warning : theme.muted);
+  footer.addSpacer();
+  if (times.length) label(footer, family === 'small' ? '港時' : failed ? '部分失败' : '香港時間', 8, failed ? theme.warning : theme.muted);
   return widget;
 }
 function errorWidget(error) {
+  const theme = palette();
   const widget = new ListWidget();
-  widget.backgroundColor = new Color('0C1422');
+  widget.backgroundColor = theme.background;
   widget.setPadding(12, 12, 12, 12);
-  label(widget, '港鐵班次 · 参数错误', 13, 'FFBA79', true);
+  label(widget, '港鐵班次 · 参数错误', 13, theme.warning, true);
   widget.addSpacer(8);
-  label(widget, error.message || String(error), 11, 'F0F4FA', false, 5);
+  label(widget, error.message || String(error), 11, theme.text, false, 5);
   widget.url = URLScheme.forOpeningScript();
   widget.refreshAfterDate = new Date(Date.now() + 300000);
   return widget;
 }
+
 async function main() {
   const query = args.queryParameters || {};
   const family = config.runsInWidget ? config.widgetFamily : query.family || PREVIEW_SIZE;

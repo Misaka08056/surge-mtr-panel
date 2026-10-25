@@ -7,7 +7,7 @@
 1. 安装并打开 Scriptable。
 2. 点 **[📲 一键导入 Scriptable](https://github.com/Misaka08056/surge-mtr-panel/releases/download/scriptable/MTR-Widget.scriptable)**，打开 `MTR-Widget.scriptable` 后按 Scriptable 提示确认导入，脚本名称为 **mtr班次显示**。
 3. 如果 Safari 先下载了文件，在下载列表打开它，再点 **分享 → Scriptable**。也可在“文件”App 中找到该文件并分享给 Scriptable。不同 iOS 版本的打开方式可能不同。
-4. 在 Scriptable 运行导入的脚本，默认预览「东铁沙田双向」的中号组件。
+4. 在 Scriptable 运行导入的脚本，默认预览「落马洲开出／上水往落马洲」的中号组件。
 5. 长按 iPhone 桌面空白处，添加 **Scriptable 中号小组件**；长按组件 → **编辑小组件** → **Script** 选择 **mtr班次显示**，在 **Parameter** 填写下方参数。
 6. 回到桌面。点按组件可打开 Scriptable，按这个组件的参数重新查询并预览；桌面组件由系统另行刷新，打开预览不保证桌面立即同步。
 
@@ -48,9 +48,9 @@ line=東鐵綫&station=上水,落馬洲&direction=UP,DOWN&destination=落馬洲,
 | 参数 | 默认 | 说明 |
 | --- | --- | --- |
 | line | EAL | 线路代码或繁体名称，站名与原项目相同 |
-| station | SHT | 同一线路的车站，多个用英文或中文逗号分隔，最多8站 |
-| direction | BOTH | UP / DOWN / BOTH；一个通用值，或按站点顺序填写 |
-| destination | ALL | ALL 或终点站代码／繁体名称；支持按站点填写 |
+| station | LMC,SHS | 同一线路的车站，多个用英文或中文逗号分隔，最多8站 |
+| direction | DOWN,UP | UP / DOWN / BOTH；一个通用值，或按站点顺序填写 |
+| destination | ALL,LMC | ALL 或终点站代码／繁体名称；支持按站点填写 |
 | count | 3 | 每组保留1至4班，再按组件尺寸限制显示数量 |
 
 `destination` 筛选列车实际终点；接口每方向最多返回未来4班。筛选后为空，不意味着之后没有车。轻铁不在本接口范围内。
@@ -68,6 +68,13 @@ line=東鐵綫&station=上水,落馬洲&direction=UP,DOWN&destination=落馬洲,
 超出的组数会在右上角标为 `+N组`，只请求当前可显示的车站。需要更多内容时，拆成多个组件或选大号。上面的「上水＋落马洲」配置使用两个单向组，正好适合中号。
 
 在 Scriptable 内运行默认预览中号。修改脚本顶部的 `PREVIEW_SIZE` 为 `small` 或 `large` 可预览其他尺寸；桌面组件以添加时选定的尺寸为准。
+
+## 外观与更新
+
+- 配色跟随系统的浅色／深色模式，最近一班使用大号等宽时间，终点与月台放在下方，后续班次单独分隔。数据更新时间始终保留在底部。
+- 默认显示「落马洲开出」及「上水往落马洲」；Parameter 留空即可使用。已有明确参数时仍按参数显示，其他车站也继续支持。
+- 大号在仅有一至两组时改用上下排列的宽卡片，三至四组时使用双列布局。
+- 升级时重新点击一键导入入口导入新版。若 Scriptable 生成了同名副本，请编辑桌面组件，选择新版脚本；原有 Parameter 可继续使用。
 
 ## 时间与刷新
 

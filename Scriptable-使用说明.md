@@ -1,16 +1,21 @@
-# 港鐵班次 · Scriptable 桌面小组件
+# mtr班次显示 · Scriptable 桌面小组件
 
 这是 Surge MTR 项目的独立 Scriptable 版本，直接读取港铁官方 Next Train API。无需运行 Surge，无需 API 密钥或定位权限。支持原项目的十条线路及繁体站名、车站代码。
 
-## 安装到 iPhone
+## 一键导入到 iPhone
 
 1. 安装并打开 Scriptable。
-2. 打开同目录的 [MTR-Widget.js](MTR-Widget.js)，复制完整脚本。
-3. 在 Scriptable 点右上角 **＋**，粘贴脚本，命名为 **港鐵班次** 并保存。
-4. 点运行，默认预览「东铁沙田双向」的中号组件。如出现网络访问提示，允许访问港铁接口。
-5. 长按 iPhone 桌面空白处，添加 **Scriptable** 小组件，建议先用**中号**。
-6. 长按该组件 → **编辑小组件** → **Script** 选择「港鐵班次」。在 **Parameter** 中填写下方参数。不同系统语言的菜单文字可能略有不同。
-7. 回到桌面。点按组件可打开 Scriptable，按这个组件的参数重新查询并预览；桌面上的组件由系统另行刷新，打开预览不保证桌面立即同步。
+2. 点 **[📲 一键导入 Scriptable](https://github.com/Misaka08056/surge-mtr-panel/raw/refs/heads/main/MTR-Widget.scriptable)**，打开 `MTR-Widget.scriptable` 后按 Scriptable 提示确认导入，脚本名称为 **mtr班次显示**。
+3. 如果 Safari 先下载了文件，在下载列表打开它，再点 **分享 → Scriptable**。也可在“文件”App 中找到该文件并分享给 Scriptable。不同 iOS 版本的打开方式可能不同。
+4. 在 Scriptable 运行导入的脚本，默认预览「东铁沙田双向」的中号组件。
+5. 长按 iPhone 桌面空白处，添加 **Scriptable 中号小组件**；长按组件 → **编辑小组件** → **Script** 选择 **mtr班次显示**，在 **Parameter** 填写下方参数。
+6. 回到桌面。点按组件可打开 Scriptable，按这个组件的参数重新查询并预览；桌面组件由系统另行刷新，打开预览不保证桌面立即同步。
+
+此入口提供 Scriptable 原生的 `.scriptable` 导入文件，内含完整代码和名称、图标信息，不依赖第三方导入器。首次导入需要系统或 Scriptable 的打开／确认操作，网页不能绕过这些操作，也不能自动把小组件放到桌面。
+
+### 手动安装备用方式
+
+若系统没有显示 Scriptable 选项，打开 [MTR-Widget.js](MTR-Widget.js)，复制完整代码，在 Scriptable 点 **＋**、粘贴并保存，命名为 **mtr班次显示**。再按上面的第4、5步操作。
 
 ## 常用参数
 
@@ -78,7 +83,9 @@ line=東鐵綫&station=上水,落馬洲&direction=UP,DOWN&destination=落馬洲,
 
 已通过 Node.js 的 Scriptable API 模拟测试，覆盖参数、十条线路、目的地筛选、跨午夜、错误与超时、过期数据、显示组数和点按参数传递；并确认港铁沙田实时接口返回成功。**尚未在实体 iPhone 的 Scriptable 中验证导入、原生排版和实际后台刷新。**
 
-仓库内测试：`node --test tests/scriptable-widget.test.cjs`（Node.js 18或更新版本）。
+仓库内测试：`node --test tests/scriptable-widget.test.cjs`（Node.js 18或更新版本）。修改 `MTR-Widget.js` 后，先执行 `node scripts/build-scriptable.cjs` 重新生成导入包；测试会验证导入包与脚本一致。
+
+`.scriptable` 导出结构参考 [Import-Script 的原生导出示例](https://github.com/supermamon/scriptable-scripts/blob/master/Import-Script/Import-Script.scriptable)。
 
 - [原项目及车站代码表](https://github.com/Misaka08056/surge-mtr-panel)
 - [港铁官方接口示例](https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=EAL&sta=SHT&lang=TC)
@@ -86,4 +93,3 @@ line=東鐵綫&station=上水,落馬洲&direction=UP,DOWN&destination=落馬洲,
 - [Scriptable 参数说明](https://docs.scriptable.app/args/)
 
 代码沿用项目的 MIT License。港铁数据权利及使用条件以数据提供方为准。
-

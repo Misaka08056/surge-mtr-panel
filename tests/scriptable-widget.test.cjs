@@ -112,3 +112,13 @@ test('invalid parameters and unsupported sizes render a useful error widget', as
   }
 });
 
+
+test('native Scriptable import package contains the exact current widget', () => {
+  const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../MTR-Widget.scriptable'), 'utf8'));
+  assert.equal(pkg.name, 'mtr班次显示');
+  assert.equal(pkg.script, source);
+  assert.equal(pkg.icon.color, 'cyan');
+  assert.equal(pkg.icon.glyph, 'train');
+  assert.equal(pkg.always_run_in_app, false);
+  assert.deepEqual(pkg.share_sheet_inputs, []);
+});

@@ -1,10 +1,16 @@
-# 港鐵即時班次 · Surge 面板与 Scriptable 小组件
+# mtr班次显示
+
+港铁班次显示工具，支持 **Surge iOS 面板**与 **Scriptable 桌面小组件**，共用港铁官方 Next Train 数据源，无需 API 密钥。
+
+**[📲 一键导入 Scriptable](https://github.com/Misaka08056/surge-mtr-panel/raw/refs/heads/main/MTR-Widget.scriptable)** · [Scriptable 使用说明](Scriptable-使用说明.md) · [Surge 模块](MTR-Next-Train.sgmodule)
+
+在已安装 Scriptable 的 iPhone 上点上方入口，打开 `.scriptable` 文件后确认导入。如果 Safari 先下载文件，请在下载列表打开它，再点“分享 → Scriptable”。导入名称为 **mtr班次显示**，无需复制代码或安装第三方导入器。导入后仍需在桌面添加 Scriptable 组件并选择该脚本，iOS 不允许网页自动放置桌面组件。
 
 直接使用港铁官方 Next Train API，显示预计到站/开出时间、剩余分钟、列车终点、月台及经马场提示。无需 MITM 或额外 API 密钥。支持官方接口的 10 条铁路线路；轻铁使用另一套 API，本模块不包含轻铁。
 
 ## Scriptable 桌面小组件
 
-现在也可在 iPhone 桌面显示班次，使用独立脚本 [MTR-Widget.js](MTR-Widget.js)，不依赖 Surge。支持小、中、大三种尺寸，保留多站点、方向和终点筛选。按[安装及参数说明](Scriptable-使用说明.md)添加 Scriptable 小组件。
+现在也可在 iPhone 桌面显示班次，优先使用上方的一键导入入口，或使用独立脚本 [MTR-Widget.js](MTR-Widget.js)，不依赖 Surge。支持小、中、大三种尺寸，保留多站点、方向和终点筛选。按[安装及参数说明](Scriptable-使用说明.md)添加 Scriptable 小组件。
 
 例如中号组件同时显示上水往落马洲和落马洲开出，在 Parameter 填写：
 
